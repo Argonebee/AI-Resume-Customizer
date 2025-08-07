@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Resume Customizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <!-- PDF.js ES Module -->
+  <script type="module">
+    import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.mjs';
+    window.pdfjsLib = pdfjsLib;
+  </script>
+</head>
+<body>
+  <div class="top-left-nav">
+    <a href="index.html" class="nav-btn">← Home</a>
+  </div>
+  <div class="container">
+    <h1>AI Resume Customizer</h1>
+    <form id="resumeForm">
+      <div class="form-group">
+        <label for="resumeUpload">Upload Resume (PDF)</label>
+        <input type="file" id="resumeUpload" accept=".pdf" required>
+      </div>
+      <div class="form-group">
+        <label for="jobTitle">Job Title</label>
+        <input type="text" id="jobTitle" placeholder="e.g. Backend Engineer" required>
+      </div>
+      <div class="form-group">
+        <label for="jobDescription">Job Description</label>
+        <textarea id="jobDescription" rows="4" placeholder="Paste job description here..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="jobSkills">Key Skills / Requirements</label>
+        <textarea id="jobSkills" rows="2" placeholder="e.g. Java, Spring Boot, Microservices" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="apiKey">Gemini API Key</label>
+        <input type="password" id="apiKey" placeholder="Enter your API Key" required>
+      </div>
+      <button type="submit" class="primary-btn">Customize Resume</button>
+    </form>
+
+    <div id="loading" class="hidden">
+      <p>Processing... Please wait.</p>
+    </div>
+
+    <div id="reviewSection" class="hidden">
+
+      <div style="margin-top: 10px;">
+        <button id="downloadBtn" class="success-btn">Download as Text</button>
+        <button id="backBtn" class="secondary-btn" onclick="window.location.href='index.html'">Back to Home</button>
+      </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <div id="customizedResumeDiv" class="hidden"></div>
+      <h2>Resume Feedback Dashboard</h2>
+      <div id="atsScoreBar"></div>
+      <div>
+        <strong>Keyword Matches:</strong>
+        <div id="keywordMatch"></div>
+      </div>
+      <div>
+        <strong>Skill Gaps:</strong>
+        <div id="skillGaps"></div>
+      </div>
+      <div>
+        <strong>Enhancement Suggestions:</strong>
+        <div id="suggestions"></div>
+      </div>
+      <div style="margin-top:16px;">
+        <button id="exportPdfBtn" class="success-btn">Export as PDF</button>
+        <button id="exportWordBtn" class="success-btn">Export as Word</button>
+      </div>
+    </div>
+
+    <div id="errorMsg" class="error hidden"></div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
