@@ -3,8 +3,50 @@ import express from "express";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 import cors from "cors";
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+// Load .env into process.env early so spawned children inherit the same env.
 dotenv.config();
+
+// Self-daemonize when run directly from a TTY on Windows (or other platforms) so
+// running `node server.js` doesn't block the terminal. To opt-out, pass
+// `--no-daemon` or set environment variable SERVER_NO_DAEMON=1.
+try {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  const noDaemonFlag = process.argv.includes('--no-daemon') || process.env.SERVER_NO_DAEMON === '1' || process.env.SERVER_NO_DAEMON === 'true';
+
+  // Only daemonize when stdin is a TTY and we're not explicitly opting out.
+  if (!noDaemonFlag && process.stdin && process.stdin.isTTY) {
+    // Spawn a detached child with the same script and args plus a flag to prevent recursion.
+    const args = process.argv.slice(1).concat('--no-daemon');
+    const child = spawn(process.execPath, args, {
+      detached: true,
+      stdio: 'ignore',
+      env: { ...process.env, SERVER_NO_DAEMON: '1' },
+    });
+
+    // Write PID for later stop/inspection
+    try {
+      fs.writeFileSync(path.join(__dirname, 'server.pid'), String(child.pid), { encoding: 'utf8' });
+      console.log(`Server started in background (detached). PID ${child.pid} written to server.pid`);
+    } catch (e) {
+      // If we can't write the PID file, still proceed
+      console.log(`Server started in background (detached). PID ${child.pid}`);
+    }
+
+    child.unref();
+    // Exit parent so the terminal is returned to the user.
+    process.exit(0);
+  }
+} catch (e) {
+  // If daemonization fails for any reason, continue starting in current process.
+  console.warn('Daemonization check failed:', e && e.message);
+}
 const app = express();
 app.use(express.json());
 app.use(cors());
