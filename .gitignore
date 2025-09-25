@@ -1,4 +1,13 @@
-# ignore secrets
+node_modules/
+dist/
+.env
+*.log
+server.pid
+/.vscode/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*# ignore secrets
 .env
 
 # ignore node modules

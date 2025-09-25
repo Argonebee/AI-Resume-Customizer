@@ -229,7 +229,8 @@ Key Skills/Requirements: ${jobDetails.skills}
   }
 });
 
-app.listen(3000, () =>
-  console.log("🚀 Backend running on http://localhost:3000")
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =>
+  console.log(`🚀 Backend running on http://localhost:${PORT}`)
 );
 // To run the server, use: node server.js
