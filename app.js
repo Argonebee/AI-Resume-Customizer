@@ -14,15 +14,32 @@ async function extractTextFromPDF(file) {
   return text.trim();
 }
 
-// Helper: Generate customized resume (via backend so API key stays server-side)
+// Helper to resolve API base: prefer Supabase Edge Functions when configured (for GitHub Pages/static hosting)
+function apiBase() {
+  const edge = (typeof window !== 'undefined' && window.SUPABASE_EDGE_URL) ? String(window.SUPABASE_EDGE_URL).replace(/\/$/, '') : '';
+  return edge || '';
+}
+
+function apiHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined' && window.SUPABASE_EDGE_URL && window.SUPABASE_ANON_KEY) {
+    headers['Authorization'] = `Bearer ${window.SUPABASE_ANON_KEY}`;
+  }
+  return headers;
+}
+
+// Helper: Generate customized resume (via Edge Functions when configured; else fallback to Node backend)
 async function getCustomizedResume(resumeText, jobDetails) {
-  const resp = await fetch('/api/customize', {
+  const base = apiBase();
+  const url = base ? `${base}/customize` : '/api/customize';
+  const resp = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: apiHeaders(),
     body: JSON.stringify({ resumeText, jobDetails }),
   });
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
+    let err = {};
+    try { err = await resp.json(); } catch (_) {}
     throw new Error(err.error || 'Failed to get customized resume');
   }
   const data = await resp.json();
@@ -31,13 +48,16 @@ async function getCustomizedResume(resumeText, jobDetails) {
 
 // --- Helper: Keyword Extraction ---
 async function extractKeywords(resumeText, jobDetails) {
-  const resp = await fetch('/api/keywords', {
+  const base = apiBase();
+  const url = base ? `${base}/keywords` : '/api/keywords';
+  const resp = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: apiHeaders(),
     body: JSON.stringify({ resumeText, jobDetails }),
   });
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
+    let err = {};
+    try { err = await resp.json(); } catch (_) {}
     throw new Error(err.error || 'Keyword extraction failed');
   }
   return resp.json();
@@ -51,13 +71,16 @@ function calculateATSScore(matchedKeywords, jobKeywords) {
 
 // --- Helper: Enhancement Suggestions ---
 async function getResumeSuggestions(resumeText, jobDetails) {
-  const resp = await fetch('/api/suggestions', {
+  const base = apiBase();
+  const url = base ? `${base}/suggestions` : '/api/suggestions';
+  const resp = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: apiHeaders(),
     body: JSON.stringify({ resumeText, jobDetails }),
   });
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
+    let err = {};
+    try { err = await resp.json(); } catch (_) {}
     throw new Error(err.error || 'Suggestion generation failed');
   }
   const j = await resp.json();
@@ -196,17 +219,8 @@ document.getElementById('resumeForm').addEventListener('submit', async function(
       skills: jobSkills
     };
 
-// 1. Send to backend server
-    const response = await fetch("http://localhost:3000/api/customize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resumeText, jobDetails }),
-    });
-    const data = await response.json();
-
-    if (!response.ok) throw new Error(data.error || "Backend error");
-
-    const markdownResume = data.customizedResume;
+// 1. Send to backend (Edge when configured, otherwise local)
+    const markdownResume = await getCustomizedResume(resumeText, jobDetails);
 
     // Show the customized resume section (plain markdown and HTML preview)
     if (customizedResumeDiv) {
@@ -222,16 +236,7 @@ document.getElementById('resumeForm').addEventListener('submit', async function(
     }
 
     // 2. Keyword extraction (call server-side endpoint so API key is not exposed)
-    const keywordResp = await fetch("http://localhost:3000/api/keywords", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resumeText, jobDetails }),
-    });
-    if (!keywordResp.ok) {
-      const err = await keywordResp.json().catch(() => ({}));
-      throw new Error(err.error || 'Keyword extraction failed');
-    }
-    const keywordData = await keywordResp.json();
+    const keywordData = await extractKeywords(resumeText, jobDetails);
 
     // 3. ATS scoring
     const atsScore = calculateATSScore(keywordData.matchedKeywords, keywordData.jobKeywords);
@@ -294,17 +299,7 @@ document.getElementById('resumeForm').addEventListener('submit', async function(
 
     // Enhancement suggestions
     // 4. Enhancement suggestions (call server-side endpoint)
-    const suggestResp = await fetch("http://localhost:3000/api/suggestions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resumeText, jobDetails }),
-    });
-    if (!suggestResp.ok) {
-      const err = await suggestResp.json().catch(() => ({}));
-      throw new Error(err.error || 'Suggestion generation failed');
-    }
-    const suggestJson = await suggestResp.json();
-    let suggestions = suggestJson.suggestions || '';
+    let suggestions = await getResumeSuggestions(resumeText, jobDetails);
 
     // --- FIX: Ensure suggestions is a string ---
     if (Array.isArray(suggestions)) {
