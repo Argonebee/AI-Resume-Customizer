@@ -84,7 +84,7 @@ If you see "Upstream LLM error":
 - Ensure the server has outbound internet access.
 - Double-check you aren't including huge payloads; trim input and retry.
 
-## Note
+## Notes
 
 - Node server is dev-only. In production (Pages), the app is static and uses Supabase directly via `config.js`.
 - Edge Functions include CORS handling and mirror the existing request/response shapes, so no frontend changes are needed.
