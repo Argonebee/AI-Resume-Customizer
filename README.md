@@ -34,8 +34,8 @@ The goal is to simplify and enhance the resume creation process for professional
 
 | Layer | Technology |
 |-------|-------------|
-| **Frontend** | HTML, CSS, JavaScript (or React if applicable) |
-| **Backend** | Supabase (Database + Edge Functions) |
+| **Frontend** | HTML, CSS, JavaScript |
+| **Backend** | Supabase (Edge Functions) |
 | **AI Engine** | Gemini |
-| **Hosting** | Vercel / GitHub Pages |
+| **Hosting** | GitHub Pages |
 | **Version Control** | Git & GitHub |
