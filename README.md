@@ -39,10 +39,3 @@ The goal is to simplify and enhance the resume creation process for professional
 | **AI Engine** | Gemini |
 | **Hosting** | Vercel / GitHub Pages |
 | **Version Control** | Git & GitHub |
-
----
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Argonebee/AI-Resume-Customizer.git
-cd AI-Resume-Customizer
